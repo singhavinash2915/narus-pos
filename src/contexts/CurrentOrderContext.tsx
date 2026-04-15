@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react'
+import React, { createContext, useContext, useReducer, useCallback, useState, useEffect } from 'react'
 import type { CartItem, CartDiscount, CurrentOrder, OrderType, Variation, ItemType, MenuItem } from '@/types'
 import { CGST_RATE, SGST_RATE } from '@/lib/constants'
 
@@ -151,6 +151,7 @@ function orderReducer(state: CurrentOrderState, action: OrderAction): CurrentOrd
 
 interface CurrentOrderContextValue {
   order: CurrentOrderState
+  orderNumber: string // padded session counter, e.g. "001"
   addItem: (menuItem: MenuItem, variation: Variation) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
@@ -160,12 +161,24 @@ interface CurrentOrderContextValue {
   setDiscount: (discount: CartDiscount | null) => void
   clearOrder: () => void
   loadOrder: (order: CurrentOrder) => void
+  bumpOrderNumber: () => void
 }
 
 const CurrentOrderContext = createContext<CurrentOrderContextValue | null>(null)
 
 export function CurrentOrderProvider({ children }: { children: React.ReactNode }) {
   const [order, dispatch] = useReducer(orderReducer, initialState)
+
+  // Per-session order counter. Resets when the tab closes (sessionStorage).
+  const [counter, setCounter] = useState<number>(() => {
+    const stored = sessionStorage.getItem('narus_order_counter')
+    return stored ? parseInt(stored, 10) : 1
+  })
+  useEffect(() => {
+    sessionStorage.setItem('narus_order_counter', String(counter))
+  }, [counter])
+  const bumpOrderNumber = useCallback(() => setCounter(c => c + 1), [])
+  const orderNumber = String(counter).padStart(3, '0')
 
   const addItem = useCallback((menuItem: MenuItem, variation: Variation) => {
     dispatch({ type: 'ADD_ITEM', payload: { menuItem, variation } })
@@ -205,7 +218,7 @@ export function CurrentOrderProvider({ children }: { children: React.ReactNode }
 
   return (
     <CurrentOrderContext.Provider
-      value={{ order, addItem, removeItem, updateQuantity, setOrderType, setCustomer, setTable, setDiscount, clearOrder, loadOrder }}
+      value={{ order, orderNumber, addItem, removeItem, updateQuantity, setOrderType, setCustomer, setTable, setDiscount, clearOrder, loadOrder, bumpOrderNumber }}
     >
       {children}
     </CurrentOrderContext.Provider>
