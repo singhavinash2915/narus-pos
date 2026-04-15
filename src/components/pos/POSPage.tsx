@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, Minus, Plus, Trash2, X, Percent, CreditCard, Banknote, Smartphone } from 'lucide-react'
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle, ResponsiveDialogFooter } from '@/components/ui/responsive-dialog'
+import { hapticLight, hapticMedium } from '@/lib/native'
 import type { MenuItem, Variation } from '@/types'
 
 // ──────────────────────────────────────
@@ -412,6 +413,7 @@ function MobilePOSFlow() {
   )
 
   const handleAddItem = (item: MenuItem) => {
+    hapticLight()
     if (item.price_half) {
       setVariationItem(item)
     } else {
@@ -420,6 +422,7 @@ function MobilePOSFlow() {
   }
 
   const handlePaymentComplete = (_method: 'cash' | 'card' | 'upi') => {
+    hapticMedium()
     // TODO: save order to DB
     clearOrder()
     setStep('menu')
@@ -538,6 +541,7 @@ function DesktopPOSLayout() {
   )
 
   const handleAddItem = (item: MenuItem) => {
+    hapticLight()
     if (item.price_half) {
       setVariationItem(item)
     } else {
@@ -546,6 +550,7 @@ function DesktopPOSLayout() {
   }
 
   const handlePaymentComplete = (_method: 'cash' | 'card' | 'upi') => {
+    hapticMedium()
     // TODO: save order to DB
     clearOrder()
     setShowPayment(false)
