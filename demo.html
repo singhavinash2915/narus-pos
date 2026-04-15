@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NARU's POS - Restaurant Management System | Product Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',800:'#9a3412',900:'#7c2d12' },
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        .gradient-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+        .gradient-brand { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .glow { box-shadow: 0 0 60px rgba(249,115,22,0.15); }
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .fade-up { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .screen-shadow { box-shadow: 0 25px 80px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.2); }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        .feature-card { transition: all 0.3s ease; }
+        .stat-card { background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(249,115,22,0.02)); }
+        .device-frame { border-radius: 24px; border: 8px solid #1a1a2e; background: #fff; overflow: hidden; }
+        .mobile-frame { border-radius: 32px; border: 6px solid #1a1a2e; background: #fff; overflow: hidden; width: 220px; }
+        .tab-active { background: #ea580c; color: white; }
+    </style>
+</head>
+<body class="font-sans text-gray-800 bg-white">
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 gradient-brand rounded-xl flex items-center justify-center">
+                <span class="text-white font-bold text-sm">N</span>
+            </div>
+            <span class="font-bold text-lg">NARU's POS</span>
+        </div>
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
+            <a href="#features" class="hover:text-brand-600 transition">Features</a>
+            <a href="#screens" class="hover:text-brand-600 transition">Screens</a>
+            <a href="#tech" class="hover:text-brand-600 transition">Technology</a>
+            <a href="#pricing" class="hover:text-brand-600 transition">Investment</a>
+        </div>
+        <a href="#pricing" class="px-5 py-2 gradient-brand text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-brand-500/25 transition">Get Started</a>
+    </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="gradient-hero min-h-screen flex items-center pt-16 overflow-hidden relative">
+    <div class="absolute inset-0 opacity-5" style="background-image: url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.4%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
+        <div>
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-brand-400 text-xs font-semibold mb-6">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Web + iOS + Android
+            </div>
+            <h1 class="text-5xl md:text-6xl font-black text-white leading-tight mb-6">
+                Complete Restaurant<br>
+                <span class="text-transparent bg-clip-text gradient-brand bg-gradient-to-r from-brand-400 to-brand-600">Management System</span>
+            </h1>
+            <p class="text-lg text-gray-300 mb-8 leading-relaxed max-w-lg">
+                Built for <strong class="text-white">NARU's Biryani & Kababs</strong>. Modern POS, real-time order tracking, multi-device sync, admin analytics — everything your restaurant needs in one platform.
+            </p>
+            <div class="flex gap-4 mb-12">
+                <a href="#screens" class="px-8 py-3.5 gradient-brand text-white font-bold rounded-xl hover:shadow-xl hover:shadow-brand-500/30 transition text-sm">View Live Demo</a>
+                <a href="#pricing" class="px-8 py-3.5 glass text-white font-semibold rounded-xl hover:bg-white/10 transition text-sm">See Pricing</a>
+            </div>
+            <div class="flex gap-8">
+                <div>
+                    <p class="text-2xl font-bold text-white">3-5</p>
+                    <p class="text-xs text-gray-400">Devices Supported</p>
+                </div>
+                <div class="w-px bg-white/10"></div>
+                <div>
+                    <p class="text-2xl font-bold text-white">Real-time</p>
+                    <p class="text-xs text-gray-400">Multi-Device Sync</p>
+                </div>
+                <div class="w-px bg-white/10"></div>
+                <div>
+                    <p class="text-2xl font-bold text-white">&#8377;0/mo</p>
+                    <p class="text-xs text-gray-400">Hosting Cost</p>
+                </div>
+            </div>
+        </div>
+        <div class="relative">
+            <div class="device-frame screen-shadow float max-w-lg ml-auto">
+                <!-- Mini POS Screen Mockup -->
+                <div class="bg-gray-50 p-0">
+                    <div class="flex h-[420px]">
+                        <!-- Mini Sidebar -->
+                        <div class="w-10 bg-white border-r border-gray-100 flex flex-col items-center py-2 gap-2 flex-shrink-0">
+                            <div class="w-6 h-6 gradient-brand rounded-md flex items-center justify-center"><span class="text-white text-[8px] font-bold">N</span></div>
+                            <div class="w-6 h-6 bg-brand-50 rounded-md flex items-center justify-center mt-2"><svg class="w-3 h-3 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+                            <div class="w-6 h-6 rounded-md flex items-center justify-center"><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+                        </div>
+                        <!-- Menu Area -->
+                        <div class="flex-1 flex flex-col">
+                            <div class="bg-white px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-brand-600">NARU's POS</span>
+                                <span class="px-2 py-0.5 bg-brand-500 text-white text-[7px] font-bold rounded-full">Dine In</span>
+                                <span class="px-2 py-0.5 border border-gray-200 text-gray-400 text-[7px] font-medium rounded-full">Delivery</span>
+                            </div>
+                            <div class="flex flex-1">
+                                <div class="w-20 bg-white border-r border-gray-100 py-1 flex-shrink-0">
+                                    <div class="px-1.5 py-1 mx-1 bg-brand-500 text-white text-[7px] font-medium rounded mb-0.5">Veg Starter</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Non-Veg Starter</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Veg Main Course</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Breads & Roti</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Veg Biryanis</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Non Veg Biryani</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded mb-0.5">Rice</div>
+                                    <div class="px-1.5 py-1 mx-1 text-[7px] text-gray-500 hover:bg-gray-50 rounded">Beverages</div>
+                                </div>
+                                <div class="flex-1 p-2 grid grid-cols-3 gap-1.5 content-start overflow-hidden">
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-1.5"><div class="flex justify-between"><span class="w-2 h-2 border border-green-500 rounded-sm"></span><span class="text-[7px] text-gray-400">&#8377;220</span></div><p class="text-[8px] font-semibold mt-1">Paneer Tikka</p><p class="text-[6px] text-gray-400">Half: &#8377;140</p></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-1.5"><div class="flex justify-between"><span class="w-2 h-2 border border-green-500 rounded-sm"></span><span class="text-[7px] text-gray-400">&#8377;190</span></div><p class="text-[8px] font-semibold mt-1">Veg Manchurian</p><p class="text-[6px] text-gray-400">Half: &#8377;120</p></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-1.5"><div class="flex justify-between"><span class="w-2 h-2 border border-green-500 rounded-sm"></span><span class="text-[7px] text-gray-400">&#8377;180</span></div><p class="text-[8px] font-semibold mt-1">Hara Bhara Kabab</p><p class="text-[6px] text-gray-400">Half: &#8377;110</p></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-1.5"><div class="flex justify-between"><span class="w-2 h-2 border border-green-500 rounded-sm"></span><span class="text-[7px] text-gray-400">&#8377;160</span></div><p class="text-[8px] font-semibold mt-1">Crispy Corn</p><p class="text-[6px] text-gray-400">Half: &#8377;100</p></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-1.5"><div class="flex justify-between"><span class="w-2 h-2 border border-green-500 rounded-sm"></span><span class="text-[7px] text-gray-400">&#8377;200</span></div><p class="text-[8px] font-semibold mt-1">Mushroom 65</p><p class="text-[6px] text-gray-400">Half: &#8377;130</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Order Panel -->
+                        <div class="w-44 bg-white border-l border-gray-100 flex flex-col flex-shrink-0">
+                            <div class="px-2 py-2 border-b border-gray-100">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[9px] font-semibold">Order <span class="text-brand-500">#012</span></span>
+                                    <span class="text-[7px] text-red-400">Clear</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 px-2 py-1 space-y-1 overflow-hidden">
+                                <div class="flex items-center gap-1 py-1 border-b border-gray-50">
+                                    <div class="flex-1"><p class="text-[8px] font-medium">Paneer Tikka</p><p class="text-[6px] text-gray-400">Full &middot; &#8377;220</p></div>
+                                    <div class="flex items-center gap-0.5"><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">-</span><span class="text-[8px] font-semibold w-3 text-center">2</span><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">+</span></div>
+                                    <span class="text-[8px] font-semibold w-8 text-right">&#8377;440</span>
+                                </div>
+                                <div class="flex items-center gap-1 py-1 border-b border-gray-50">
+                                    <div class="flex-1"><p class="text-[8px] font-medium">Butter Naan</p><p class="text-[6px] text-gray-400">Full &middot; &#8377;30</p></div>
+                                    <div class="flex items-center gap-0.5"><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">-</span><span class="text-[8px] font-semibold w-3 text-center">4</span><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">+</span></div>
+                                    <span class="text-[8px] font-semibold w-8 text-right">&#8377;120</span>
+                                </div>
+                                <div class="flex items-center gap-1 py-1 border-b border-gray-50">
+                                    <div class="flex-1"><p class="text-[8px] font-medium">Chicken Biryani</p><p class="text-[6px] text-gray-400">Half &middot; &#8377;160</p></div>
+                                    <div class="flex items-center gap-0.5"><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">-</span><span class="text-[8px] font-semibold w-3 text-center">1</span><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">+</span></div>
+                                    <span class="text-[8px] font-semibold w-8 text-right">&#8377;160</span>
+                                </div>
+                                <div class="flex items-center gap-1 py-1">
+                                    <div class="flex-1"><p class="text-[8px] font-medium">Lassi</p><p class="text-[6px] text-gray-400">Full &middot; &#8377;50</p></div>
+                                    <div class="flex items-center gap-0.5"><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">-</span><span class="text-[8px] font-semibold w-3 text-center">2</span><span class="w-4 h-4 bg-gray-100 rounded text-[8px] flex items-center justify-center">+</span></div>
+                                    <span class="text-[8px] font-semibold w-8 text-right">&#8377;100</span>
+                                </div>
+                            </div>
+                            <div class="px-2 py-2 bg-gray-50 border-t border-gray-100">
+                                <div class="flex justify-between text-[7px] text-gray-400 mb-0.5"><span>Subtotal</span><span>&#8377;820.00</span></div>
+                                <div class="flex justify-between text-[7px] text-green-500 mb-0.5"><span>NARU10 (10%)</span><span>-&#8377;82.00</span></div>
+                                <div class="flex justify-between text-[7px] text-gray-400 mb-1"><span>Tax (5%)</span><span>&#8377;36.90</span></div>
+                                <div class="flex justify-between text-[10px] font-bold border-t border-gray-200 pt-1"><span>Total</span><span class="text-brand-600">&#8377;774.90</span></div>
+                                <div class="flex gap-1 mt-2">
+                                    <button class="flex-1 py-1 text-[7px] border border-gray-200 rounded-md font-medium">Discount</button>
+                                    <button class="flex-[2] py-1 text-[7px] gradient-brand text-white rounded-md font-bold">Pay & Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Floating mobile frame -->
+            <div class="absolute -bottom-8 -left-8 mobile-frame screen-shadow hidden md:block" style="animation: float 6s ease-in-out 1s infinite;">
+                <div class="bg-white p-0">
+                    <div class="bg-brand-500 px-3 py-2 flex items-center justify-between">
+                        <span class="text-white text-[9px] font-bold">NARU's POS</span>
+                        <span class="text-white/70 text-[7px]">Staff: Ravi</span>
+                    </div>
+                    <div class="px-2 py-2 space-y-1.5">
+                        <div class="bg-green-50 border border-green-100 rounded-lg p-2 flex justify-between items-center">
+                            <div><p class="text-[8px] font-semibold">Order #012</p><p class="text-[6px] text-gray-400">Table T3 &middot; Dine In</p></div>
+                            <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[6px] font-semibold rounded-full">Completed</span>
+                        </div>
+                        <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-2 flex justify-between items-center">
+                            <div><p class="text-[8px] font-semibold">Order #013</p><p class="text-[6px] text-gray-400">Delivery &middot; Rahul</p></div>
+                            <span class="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-[6px] font-semibold rounded-full">On Hold</span>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 rounded-lg p-2 flex justify-between items-center">
+                            <div><p class="text-[8px] font-semibold">Order #014</p><p class="text-[6px] text-gray-400">Pick Up &middot; Priya</p></div>
+                            <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[6px] font-semibold rounded-full">Saved</span>
+                        </div>
+                    </div>
+                    <div class="px-2 py-1.5 bg-gray-50 border-t border-gray-100 text-center">
+                        <span class="text-[7px] text-gray-400">Today: &#8377;12,450 &middot; 18 orders</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features" class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">FEATURES</span>
+            <h2 class="text-4xl font-bold mb-4">Everything Your Restaurant Needs</h2>
+            <p class="text-gray-500 max-w-xl mx-auto">A complete POS and management platform designed specifically for NARU's Biryani & Kababs. Fast, intuitive, and built for busy kitchens.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Fast POS Billing</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Touch-optimized menu grid with category filters. Add items, pick Half/Full portions, apply discounts and coupons — all in seconds.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Real-time Sync</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">All billing counters stay in sync instantly. Create an order on Counter 1, see it appear on Counter 2 in real-time. Powered by Supabase.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Multi-Payment Support</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Accept Cash, Card, and UPI payments. Auto-calculates change for cash payments. Clean payment flow for quick checkout.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Owner Dashboard</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Track revenue, orders, top-selling items, and payment methods. Compare daily, weekly, monthly, and quarterly performance.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Role-Based Access</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Staff log in with a quick PIN for billing. Owner logs in with email/password for full admin access. Manage, Dashboard are owner-only.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">iOS & Android Apps</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Same beautiful app as a native mobile experience. Install on tablets for counter billing and on phone for owner monitoring on the go.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">KOT & Print</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Generate Kitchen Order Tickets instantly. Print-ready format for thermal printers. Send orders to kitchen with one tap.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Discounts & Coupons</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Apply percentage or fixed discounts. Create coupon codes (NARU10, DROOL20) with min order and expiry. BOGO support.</p>
+            </div>
+            <div class="feature-card bg-white border border-gray-100 rounded-2xl p-6">
+                <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Menu Management</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Add, edit, delete menu items and categories. Set Half/Full prices, mark Veg/Non-Veg, toggle availability. Changes sync instantly.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SCREENS SHOWCASE ==================== -->
+<section id="screens" class="py-24 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">LIVE PREVIEW</span>
+            <h2 class="text-4xl font-bold mb-4">See It in Action</h2>
+            <p class="text-gray-500 max-w-xl mx-auto">Interactive demo with real restaurant data. Click through each screen to explore the complete system.</p>
+        </div>
+
+        <!-- Screen Tabs -->
+        <div class="flex justify-center gap-2 mb-10">
+            <button onclick="showScreen('pos')" class="screen-tab tab-active px-6 py-2.5 rounded-xl text-sm font-semibold transition" data-screen="pos">POS Billing</button>
+            <button onclick="showScreen('orders')" class="screen-tab px-6 py-2.5 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-500 transition" data-screen="orders">Orders</button>
+            <button onclick="showScreen('manage')" class="screen-tab px-6 py-2.5 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-500 transition" data-screen="manage">Manage Menu</button>
+            <button onclick="showScreen('dashboard')" class="screen-tab px-6 py-2.5 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-500 transition" data-screen="dashboard">Admin Dashboard</button>
+        </div>
+
+        <!-- Screen Display -->
+        <div class="max-w-5xl mx-auto">
+            <div class="device-frame screen-shadow">
+                <iframe id="demo-iframe" src="index.html" class="w-full h-[560px] border-0"></iframe>
+            </div>
+            <p class="text-center text-xs text-gray-400 mt-4">Interactive demo - click items, add to order, explore all screens</p>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== TECH STACK ==================== -->
+<section id="tech" class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">TECHNOLOGY</span>
+            <h2 class="text-4xl font-bold mb-4">Built with Modern Tech</h2>
+            <p class="text-gray-500 max-w-xl mx-auto">Production-grade stack used by top companies. Reliable, fast, and scalable.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 text-cyan-400" fill="currentColor"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.31 0-.6.045-.862.126C4.591 1.892 3.76 3.636 3.76 6.02c0 .807.092 1.677.27 2.594C1.538 9.563 0 10.78 0 12.004c0 1.234 1.557 2.463 4.073 3.41-.18.922-.273 1.795-.273 2.602 0 2.397.838 4.148 2.484 4.586.258.078.545.118.854.118 1.352 0 3.12-.963 4.906-2.63 1.79 1.672 3.562 2.63 4.918 2.63.31 0 .598-.044.853-.118 1.637-.432 2.472-2.17 2.472-4.552 0-.82-.095-1.7-.277-2.628C22.446 14.444 24 13.224 24 12.004s-1.535-2.428-4.04-3.376c.18-.914.274-1.79.274-2.607 0-2.384-.836-4.13-2.473-4.56a2.07 2.07 0 0 0-.858-.128zm-.79 1.456c.869.23 1.387 1.256 1.387 3.05 0 .693-.082 1.454-.236 2.254-1.166-.35-2.45-.6-3.808-.744a23.247 23.247 0 0 0-2.394-2.88c1.563-1.468 3.044-2.317 4.062-2.317.217 0 .414.032.588.088l.4.15-.001.4.002-.001z"/></svg>
+                </div>
+                <h3 class="font-bold mb-1">React 18</h3>
+                <p class="text-xs text-gray-400">UI Framework</p>
+            </div>
+            <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 text-emerald-500" fill="currentColor"><path d="M21.362 9.354H12V.396h.003c.36 0 .67.256.737.612l2.203 11.77h4.143c.196 0 .381.092.499.249a.634.634 0 0 1 .093.554l-.576 2.106a.638.638 0 0 1-.614.47H14.66l-.38 2.032h4.143c.196 0 .381.092.499.249a.634.634 0 0 1 .093.554l-.576 2.106a.638.638 0 0 1-.614.47h-4.86l-.865 4.625a.758.758 0 0 1-.737.612h-2.29a.632.632 0 0 1-.5-.249.634.634 0 0 1-.093-.554l.792-4.434H4.33a.632.632 0 0 1-.499-.249.634.634 0 0 1-.094-.554l.576-2.106a.638.638 0 0 1 .614-.47h4.942l.38-2.032H5.105a.632.632 0 0 1-.499-.249.634.634 0 0 1-.094-.554l.576-2.106a.638.638 0 0 1 .614-.47h5.145L11.712.61A.758.758 0 0 1 12 .006V0h9.362a.638.638 0 0 1 .614.47l.576 2.106a.634.634 0 0 1-.093.554.632.632 0 0 1-.5.249h-4.14l2.157 5.505h1.386c.27 0 .505.17.595.42l.001.003.049.15c.05.152.037.32-.037.462a.632.632 0 0 1-.607.434z"/></svg>
+                </div>
+                <h3 class="font-bold mb-1">Supabase</h3>
+                <p class="text-xs text-gray-400">Database + Auth + Realtime</p>
+            </div>
+            <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 text-cyan-600" fill="currentColor"><path d="M12.001,4.8c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 C13.666,10.618,15.027,12,18.001,12c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C16.337,6.182,14.976,4.8,12.001,4.8z M6.001,12c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 c1.177,1.194,2.538,2.576,5.512,2.576c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C10.337,13.382,8.976,12,6.001,12z"/></svg>
+                </div>
+                <h3 class="font-bold mb-1">Tailwind CSS</h3>
+                <p class="text-xs text-gray-400">Modern UI Styling</p>
+            </div>
+            <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 19.5h20L12 2z" fill="#000" stroke="#000" stroke-width="1"/><path d="M12 6l-7 12.5h14L12 6z" fill="#fff"/></svg>
+                </div>
+                <h3 class="font-bold mb-1">GitHub Pages</h3>
+                <p class="text-xs text-gray-400">Hosting & Deployment</p>
+            </div>
+        </div>
+
+        <div class="mt-12 grid md:grid-cols-3 gap-6">
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <p class="text-3xl font-bold text-brand-600 mb-1">&#8377;0</p>
+                <p class="text-sm text-gray-500">Monthly Hosting Cost</p>
+                <p class="text-xs text-gray-400 mt-1">Supabase Free + GitHub Pages Free</p>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <p class="text-3xl font-bold text-brand-600 mb-1">< 200ms</p>
+                <p class="text-sm text-gray-500">Real-time Sync Latency</p>
+                <p class="text-xs text-gray-400 mt-1">Supabase Realtime WebSockets</p>
+            </div>
+            <div class="stat-card rounded-2xl p-6 text-center">
+                <p class="text-3xl font-bold text-brand-600 mb-1">3 Platforms</p>
+                <p class="text-sm text-gray-500">Web + iOS + Android</p>
+                <p class="text-xs text-gray-400 mt-1">Single React codebase via Capacitor</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== PLATFORM SUPPORT ==================== -->
+<section class="py-24 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+                <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">MULTI-PLATFORM</span>
+                <h2 class="text-4xl font-bold mb-4">One App, Every Device</h2>
+                <p class="text-gray-500 mb-8 leading-relaxed">Built with React + Capacitor. One codebase that runs as a web app, iOS app, and Android app. Your staff uses tablets at the counter, you monitor sales from your phone.</p>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Web App (Desktop / Laptop)</h4>
+                            <p class="text-sm text-gray-500">Full POS on any browser. Deploy to GitHub Pages, access from anywhere. Ideal for billing counters.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">iPad / Android Tablet</h4>
+                            <p class="text-sm text-gray-500">Touch-optimized for tablets. Perfect for counter billing with large, tappable menu items.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">iPhone / Android Phone</h4>
+                            <p class="text-sm text-gray-500">Owner monitors sales, orders, and analytics on the go. Native app via App Store & Play Store.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="relative flex justify-center">
+                <div class="device-frame w-80 screen-shadow">
+                    <div class="bg-gray-50 p-0 h-[280px] overflow-hidden">
+                        <div class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                            <div><span class="font-bold text-sm text-brand-600">Dashboard</span><p class="text-[10px] text-gray-400">NARU's Biryani & Kababs</p></div>
+                            <span class="px-3 py-1 bg-brand-500 text-white text-[9px] font-bold rounded-full">This Month</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 p-3">
+                            <div class="bg-white rounded-xl p-3 border border-gray-100"><p class="text-[9px] text-gray-400">Revenue</p><p class="text-lg font-bold">&#8377;2.4L</p><p class="text-[8px] text-green-500">+18% vs last month</p></div>
+                            <div class="bg-white rounded-xl p-3 border border-gray-100"><p class="text-[9px] text-gray-400">Orders</p><p class="text-lg font-bold">342</p><p class="text-[8px] text-blue-500">+12% vs last month</p></div>
+                            <div class="bg-white rounded-xl p-3 border border-gray-100"><p class="text-[9px] text-gray-400">Avg Value</p><p class="text-lg font-bold">&#8377;702</p><p class="text-[8px] text-brand-500">per order</p></div>
+                            <div class="bg-white rounded-xl p-3 border border-gray-100"><p class="text-[9px] text-gray-400">Top Item</p><p class="text-sm font-bold">Chicken Biryani</p><p class="text-[8px] text-purple-500">89 sold</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -bottom-4 -right-4 mobile-frame screen-shadow" style="animation: float 5s ease-in-out 0.5s infinite;">
+                    <div class="bg-white p-0 h-[200px] overflow-hidden">
+                        <div class="bg-brand-500 px-3 py-1.5"><span class="text-white text-[8px] font-bold">Today's Summary</span></div>
+                        <div class="p-2 space-y-1">
+                            <div class="flex justify-between text-[8px] py-1 border-b border-gray-50"><span class="text-gray-500">Revenue</span><span class="font-bold">&#8377;12,450</span></div>
+                            <div class="flex justify-between text-[8px] py-1 border-b border-gray-50"><span class="text-gray-500">Orders</span><span class="font-bold">18</span></div>
+                            <div class="flex justify-between text-[8px] py-1 border-b border-gray-50"><span class="text-gray-500">Avg Value</span><span class="font-bold">&#8377;691</span></div>
+                            <div class="flex justify-between text-[8px] py-1"><span class="text-gray-500">Cash / Card / UPI</span><span class="font-bold">8 / 4 / 6</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== PRICING / BUDGET ==================== -->
+<section id="pricing" class="py-24 bg-white">
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">INVESTMENT</span>
+            <h2 class="text-4xl font-bold mb-4">Project Budget</h2>
+            <p class="text-gray-500 max-w-xl mx-auto">Complete restaurant management system — design, development, deployment, and handover. One-time investment, zero monthly costs.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden">
+            <!-- Budget Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-100 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <th class="px-8 py-4">Phase</th>
+                            <th class="px-6 py-4">Deliverables</th>
+                            <th class="px-6 py-4">Timeline</th>
+                            <th class="px-8 py-4 text-right">Cost (&#8377;)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-gray-100">
+                            <td class="px-8 py-5 font-semibold">1. Setup & Architecture</td>
+                            <td class="px-6 py-5 text-gray-500">Project scaffolding, Supabase schema, auth system (PIN + email), app shell with routing</td>
+                            <td class="px-6 py-5 text-gray-500">2 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;6,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-white">
+                            <td class="px-8 py-5 font-semibold">2. POS Billing Screen</td>
+                            <td class="px-6 py-5 text-gray-500">Menu grid, categories, order panel, variations (Half/Full), discounts, coupons, payments (Cash/Card/UPI), KOT</td>
+                            <td class="px-6 py-5 text-gray-500">4 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;12,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-8 py-5 font-semibold">3. Orders Management</td>
+                            <td class="px-6 py-5 text-gray-500">Orders list, status filtering, order details, resume held orders, real-time sync across devices</td>
+                            <td class="px-6 py-5 text-gray-500">2 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;6,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-white">
+                            <td class="px-8 py-5 font-semibold">4. Menu Management (Owner)</td>
+                            <td class="px-6 py-5 text-gray-500">CRUD for menu items, categories, coupons. Availability toggle. Role-restricted access.</td>
+                            <td class="px-6 py-5 text-gray-500">2 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;5,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-8 py-5 font-semibold">5. Admin Dashboard</td>
+                            <td class="px-6 py-5 text-gray-500">KPI cards, 5 analytics charts, period filters (day/week/month/quarter), recent orders table</td>
+                            <td class="px-6 py-5 text-gray-500">3 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;8,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-white">
+                            <td class="px-8 py-5 font-semibold">6. Mobile Apps (iOS + Android)</td>
+                            <td class="px-6 py-5 text-gray-500">Capacitor integration, native builds, responsive mobile layouts, App Store & Play Store submission</td>
+                            <td class="px-6 py-5 text-gray-500">3 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;10,000</td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="px-8 py-5 font-semibold">7. Testing & Deployment</td>
+                            <td class="px-6 py-5 text-gray-500">Multi-device testing, bug fixes, GitHub Pages deployment, Supabase production setup, data seeding, handover</td>
+                            <td class="px-6 py-5 text-gray-500">2 days</td>
+                            <td class="px-8 py-5 text-right font-semibold">&#8377;5,000</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-brand-500 text-white">
+                            <td class="px-8 py-5 font-bold text-lg" colspan="2">Total Project Cost</td>
+                            <td class="px-6 py-5 font-semibold">~18 days</td>
+                            <td class="px-8 py-5 text-right font-bold text-2xl">&#8377;52,000</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="px-8 py-6 bg-white border-t border-gray-100">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            What's Included
+                        </h4>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>+ Full source code ownership</li>
+                            <li>+ Supabase project setup</li>
+                            <li>+ GitHub Pages deployment</li>
+                            <li>+ 47 menu items pre-loaded</li>
+                            <li>+ 15 days post-launch support</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Monthly Costs
+                        </h4>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>Supabase Free Tier: &#8377;0</li>
+                            <li>GitHub Pages Hosting: &#8377;0</li>
+                            <li>Domain (optional): ~&#8377;800/yr</li>
+                            <li>App Store Fee: &#8377;8,300/yr</li>
+                            <li>Play Store Fee: &#8377;2,100 (one-time)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Payment Terms
+                        </h4>
+                        <ul class="text-xs text-gray-500 space-y-1">
+                            <li>30% advance to start</li>
+                            <li>40% on POS screen delivery</li>
+                            <li>30% on final deployment</li>
+                            <li>&nbsp;</li>
+                            <li class="font-semibold text-brand-600">Budget Range: &#8377;52,000 - &#8377;58,000</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buffer Note -->
+        <div class="mt-8 bg-brand-50 rounded-2xl p-6 flex items-start gap-4">
+            <div class="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <h4 class="font-semibold text-sm text-brand-800 mb-1">Budget Buffer: &#8377;2,000 - &#8377;8,000</h4>
+                <p class="text-xs text-brand-700 leading-relaxed">Reserved for additional customization requests, extra discount types, receipt template modifications, or unexpected scope adjustments during development. Total budget capped at <strong>&#8377;60,000</strong>.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== TIMELINE ==================== -->
+<section class="py-24 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 text-xs font-semibold rounded-full mb-4">TIMELINE</span>
+            <h2 class="text-4xl font-bold mb-4">Delivery Schedule</h2>
+        </div>
+        <div class="space-y-0">
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 gradient-brand rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                    <div class="w-0.5 bg-brand-200 flex-1"></div>
+                </div>
+                <div class="pb-10">
+                    <h3 class="font-bold mb-1">Week 1: Foundation + POS</h3>
+                    <p class="text-sm text-gray-500">Project setup, Supabase schema, auth system, complete POS billing screen with all features. <strong>First demo at end of week.</strong></p>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 gradient-brand rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                    <div class="w-0.5 bg-brand-200 flex-1"></div>
+                </div>
+                <div class="pb-10">
+                    <h3 class="font-bold mb-1">Week 2: Orders + Manage + Dashboard</h3>
+                    <p class="text-sm text-gray-500">Orders screen, menu management (owner), admin analytics dashboard with all charts. Real-time sync testing.</p>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 gradient-brand rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+                    <div class="w-0.5 bg-brand-200 flex-1 opacity-0"></div>
+                </div>
+                <div class="pb-4">
+                    <h3 class="font-bold mb-1">Week 3: Mobile + Polish + Deploy</h3>
+                    <p class="text-sm text-gray-500">iOS & Android builds via Capacitor. Multi-device testing. Bug fixes. Production deployment. Data seeding. Handover.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== CTA ==================== -->
+<section class="py-24 gradient-hero relative overflow-hidden">
+    <div class="absolute inset-0 opacity-5" style="background-image: url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.4%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
+        <h2 class="text-4xl font-bold text-white mb-4">Ready to Modernize Your Restaurant?</h2>
+        <p class="text-lg text-gray-300 mb-8">Complete POS system, admin dashboard, and mobile apps. One-time investment of <strong class="text-brand-400">&#8377;52,000 - &#8377;60,000</strong> with zero monthly hosting costs.</p>
+        <div class="flex gap-4 justify-center">
+            <a href="#" class="px-8 py-4 gradient-brand text-white font-bold rounded-xl hover:shadow-xl hover:shadow-brand-500/30 transition text-sm">Let's Get Started</a>
+            <a href="#screens" class="px-8 py-4 glass text-white font-semibold rounded-xl hover:bg-white/10 transition text-sm">Try Demo First</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="bg-gray-900 text-gray-400 py-12">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 gradient-brand rounded-lg flex items-center justify-center"><span class="text-white font-bold text-xs">N</span></div>
+            <span class="text-white font-semibold">NARU's POS</span>
+        </div>
+        <p class="text-xs">Custom Restaurant Management System &middot; Proposal Document &middot; April 2026</p>
+    </div>
+</footer>
+
+<script>
+    function showScreen(screen) {
+        document.querySelectorAll('.screen-tab').forEach(t => {
+            t.classList.remove('tab-active');
+            t.classList.add('bg-white','border','border-gray-200','text-gray-500');
+        });
+        const activeTab = document.querySelector(`[data-screen="${screen}"]`);
+        activeTab.classList.add('tab-active');
+        activeTab.classList.remove('bg-white','border','border-gray-200','text-gray-500');
+
+        const iframe = document.getElementById('demo-iframe');
+        try {
+            const iframeDoc = iframe.contentWindow;
+            if (iframeDoc && iframeDoc.showPage) {
+                iframeDoc.showPage(screen === 'dashboard' ? 'dashboard' : screen);
+            }
+        } catch(e) {}
+    }
+
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
