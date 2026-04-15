@@ -1,7 +1,18 @@
 export const APP_NAME = "NARU's Biryani & Kababs"
 export const APP_SHORT_NAME = "NARU's POS"
 
-export const TAX_RATE = 0.05 // 5% GST
+// Indian GST: split equally between Central and State for intra-state restaurant sales
+export const CGST_RATE = 0.025 // 2.5%
+export const SGST_RATE = 0.025 // 2.5%
+export const GST_RATE_TOTAL = CGST_RATE + SGST_RATE // 5%
+// Backwards-compat alias
+export const TAX_RATE = GST_RATE_TOTAL
+
+// GSTIN displayed on receipts. Replace with the real one when registered.
+export const RESTAURANT_GSTIN = '29ABCDE1234F1Z5'
+export const RESTAURANT_NAME = "NARU's Biryani & Kababs"
+export const RESTAURANT_ADDRESS = 'Bengaluru, Karnataka'
+export const RESTAURANT_PHONE = '+91 98765 43210'
 
 export const ORDER_TYPES = ['dine-in', 'delivery', 'pickup'] as const
 export const ORDER_STATUSES = ['completed', 'saved', 'held'] as const

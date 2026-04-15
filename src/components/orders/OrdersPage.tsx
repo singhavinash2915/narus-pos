@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from '@/components/ui/responsive-dialog'
 import { Eye, Play, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { CGST_RATE, SGST_RATE } from '@/lib/constants'
 import type { Order, OrderStatus } from '@/types'
 
 const { orders: demoOrders } = generateDemoOrders(85)
@@ -101,9 +102,13 @@ function OrderDetailModal({ order, open, onClose }: { order: Order | null; open:
               <span>-{formatCurrency(order.discount_amount)}</span>
             </div>
           )}
-          <div className="flex justify-between">
-            <span className="text-neutral-500">Tax</span>
-            <span>{formatCurrency(order.tax_amount)}</span>
+          <div className="flex justify-between text-neutral-500">
+            <span>CGST ({(CGST_RATE * 100).toFixed(1)}%)</span>
+            <span>{formatCurrency(order.tax_amount / 2)}</span>
+          </div>
+          <div className="flex justify-between text-neutral-500">
+            <span>SGST ({(SGST_RATE * 100).toFixed(1)}%)</span>
+            <span>{formatCurrency(order.tax_amount / 2)}</span>
           </div>
           <div className="flex justify-between font-bold text-base pt-1 border-t">
             <span>Total</span>

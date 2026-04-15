@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useCurrentOrder } from '@/contexts/CurrentOrderContext'
-import { demoCategories, demoMenuItems } from '@/lib/demo-data'
+import type { OrderTotals } from '@/contexts/CurrentOrderContext'
+import { demoCategories, demoMenuItems, demoCoupons } from '@/lib/demo-data'
 import { cn, formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ShoppingCart, Minus, Plus, Trash2, X, Percent, CreditCard, Banknote, Smartphone } from 'lucide-react'
-import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle, ResponsiveDialogFooter } from '@/components/ui/responsive-dialog'
+import { Input } from '@/components/ui/input'
+import { ShoppingCart, Minus, Plus, Trash2, X, Percent, CreditCard, Banknote, Smartphone, Printer, Receipt, Tag, IndianRupee } from 'lucide-react'
+import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from '@/components/ui/responsive-dialog'
 import { hapticLight, hapticMedium } from '@/lib/native'
-import type { MenuItem, Variation } from '@/types'
+import { RESTAURANT_NAME, RESTAURANT_GSTIN, RESTAURANT_ADDRESS, RESTAURANT_PHONE, CGST_RATE, SGST_RATE } from '@/lib/constants'
+import type { MenuItem, Variation, CartItem, CartDiscount, OrderType, PaymentMethod } from '@/types'
 
 // ──────────────────────────────────────
 // Category Sidebar / Chips
@@ -137,7 +140,15 @@ function MenuItemCard({
 // ──────────────────────────────────────
 // Order Panel
 // ──────────────────────────────────────
-function OrderPanel({ onPayment }: { onPayment: () => void }) {
+function OrderPanel({
+  onPayment,
+  onOpenDiscount,
+  onPrintKOT,
+}: {
+  onPayment: () => void
+  onOpenDiscount: () => void
+  onPrintKOT: () => void
+}) {
   const { order, removeItem, updateQuantity, setOrderType, setDiscount } = useCurrentOrder()
   const { isMobile } = useBreakpoint()
 
@@ -247,9 +258,13 @@ function OrderPanel({ onPayment }: { onPayment: () => void }) {
                 <span>-{formatCurrency(order.totals.discountAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Tax (5%)</span>
-              <span>{formatCurrency(order.totals.taxAmount)}</span>
+            <div className="flex justify-between text-neutral-500">
+              <span>CGST ({(CGST_RATE * 100).toFixed(1)}%)</span>
+              <span>{formatCurrency(order.totals.cgstAmount)}</span>
+            </div>
+            <div className="flex justify-between text-neutral-500">
+              <span>SGST ({(SGST_RATE * 100).toFixed(1)}%)</span>
+              <span>{formatCurrency(order.totals.sgstAmount)}</span>
             </div>
             <div className="flex justify-between font-bold text-base pt-1 border-t">
               <span>Total</span>
@@ -257,28 +272,365 @@ function OrderPanel({ onPayment }: { onPayment: () => void }) {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
               size="touch"
-              className="flex-1"
-              onClick={() => {/* TODO: discount modal */}}
+              onClick={onOpenDiscount}
             >
               <Percent className="w-4 h-4" />
               Discount
             </Button>
             <Button
+              variant="outline"
               size="touch"
-              className="flex-1"
-              onClick={onPayment}
+              onClick={onPrintKOT}
             >
-              Pay {formatCurrency(order.totals.total)}
+              <Printer className="w-4 h-4" />
+              Print KOT
             </Button>
           </div>
+          <Button
+            size="touch"
+            className="w-full"
+            onClick={onPayment}
+          >
+            <Receipt className="w-4 h-4" />
+            Pay {formatCurrency(order.totals.total)}
+          </Button>
         </div>
       )}
     </div>
   )
+}
+
+// ──────────────────────────────────────
+// Discount Modal
+// ──────────────────────────────────────
+function DiscountModal({
+  open,
+  onClose,
+  subtotal,
+}: {
+  open: boolean
+  onClose: () => void
+  subtotal: number
+}) {
+  const { setDiscount } = useCurrentOrder()
+  const [mode, setMode] = useState<'percentage' | 'fixed' | 'coupon'>('percentage')
+  const [value, setValue] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  // Reset state every time the modal opens
+  useEffect(() => {
+    if (open) {
+      setMode('percentage')
+      setValue('')
+      setCouponCode('')
+      setError(null)
+    }
+  }, [open])
+
+  const apply = () => {
+    setError(null)
+
+    if (mode === 'coupon') {
+      const code = couponCode.trim().toUpperCase()
+      if (!code) {
+        setError('Enter a coupon code')
+        return
+      }
+      const coupon = demoCoupons.find(c => c.code === code && c.is_active)
+      if (!coupon) {
+        setError('Invalid or inactive coupon')
+        return
+      }
+      if (subtotal < coupon.min_order_value) {
+        setError(`Minimum order ${formatCurrency(coupon.min_order_value)} required`)
+        return
+      }
+      let amount = coupon.discount_type === 'percentage'
+        ? Math.round(subtotal * (coupon.discount_value / 100))
+        : coupon.discount_value
+      if (coupon.max_discount && amount > coupon.max_discount) {
+        amount = coupon.max_discount
+      }
+      const discount: CartDiscount = {
+        type: 'fixed',
+        value: amount,
+        label: `Coupon ${coupon.code}`,
+        coupon_code: coupon.code,
+      }
+      setDiscount(discount)
+      onClose()
+      return
+    }
+
+    const num = parseFloat(value)
+    if (!num || num <= 0) {
+      setError('Enter a valid amount')
+      return
+    }
+    if (mode === 'percentage' && num > 100) {
+      setError('Percentage cannot exceed 100')
+      return
+    }
+    if (mode === 'fixed' && num > subtotal) {
+      setError('Discount cannot exceed subtotal')
+      return
+    }
+
+    const discount: CartDiscount = {
+      type: mode,
+      value: num,
+      label: mode === 'percentage' ? `${num}% off` : `Flat ${formatCurrency(num)} off`,
+    }
+    setDiscount(discount)
+    onClose()
+  }
+
+  return (
+    <ResponsiveDialog open={open} onOpenChange={onClose}>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>Apply Discount</ResponsiveDialogTitle>
+      </ResponsiveDialogHeader>
+
+      {/* Mode tabs */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <button
+          onClick={() => setMode('percentage')}
+          className={cn(
+            'py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+            mode === 'percentage' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white text-neutral-600 hover:bg-neutral-50'
+          )}
+        >
+          <Percent className="w-4 h-4 inline mr-1" />
+          Percent
+        </button>
+        <button
+          onClick={() => setMode('fixed')}
+          className={cn(
+            'py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+            mode === 'fixed' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white text-neutral-600 hover:bg-neutral-50'
+          )}
+        >
+          <IndianRupee className="w-4 h-4 inline mr-1" />
+          Flat
+        </button>
+        <button
+          onClick={() => setMode('coupon')}
+          className={cn(
+            'py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+            mode === 'coupon' ? 'bg-brand-500 text-white border-brand-500' : 'bg-white text-neutral-600 hover:bg-neutral-50'
+          )}
+        >
+          <Tag className="w-4 h-4 inline mr-1" />
+          Coupon
+        </button>
+      </div>
+
+      {/* Input area */}
+      {mode === 'coupon' ? (
+        <div className="space-y-2">
+          <label className="text-xs text-neutral-500">Coupon code</label>
+          <Input
+            autoFocus
+            placeholder="e.g. NARU10"
+            value={couponCode}
+            onChange={e => setCouponCode(e.target.value.toUpperCase())}
+            className="uppercase tracking-wider"
+            onKeyDown={e => e.key === 'Enter' && apply()}
+          />
+          <p className="text-[11px] text-neutral-400">Try: NARU10, DROOL20, FLAT50</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <label className="text-xs text-neutral-500">
+            {mode === 'percentage' ? 'Percent off (0–100)' : 'Flat amount off'}
+          </label>
+          <div className="relative">
+            <Input
+              autoFocus
+              type="number"
+              inputMode="decimal"
+              placeholder={mode === 'percentage' ? '10' : '50'}
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              className="pl-8"
+              onKeyDown={e => e.key === 'Enter' && apply()}
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">
+              {mode === 'percentage' ? '%' : '₹'}
+            </span>
+          </div>
+          <p className="text-[11px] text-neutral-400">
+            Subtotal: {formatCurrency(subtotal)}
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-xs text-red-500 mt-2">{error}</p>
+      )}
+
+      <div className="flex gap-2 mt-6">
+        <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+        <Button className="flex-1" onClick={apply}>Apply</Button>
+      </div>
+    </ResponsiveDialog>
+  )
+}
+
+// ──────────────────────────────────────
+// Print Ticket — KOT (kitchen) and Receipt (customer)
+// Renders into a hidden div that becomes visible only when window.print() fires.
+// ──────────────────────────────────────
+interface PrintTicketData {
+  mode: 'kot' | 'receipt'
+  orderNumber: string
+  orderType: OrderType
+  tableNumber?: string
+  customerName?: string
+  items: CartItem[]
+  totals: OrderTotals
+  discount: CartDiscount | null
+  paymentMethod?: PaymentMethod
+  printedAt: Date
+}
+
+function PrintTicket({ data }: { data: PrintTicketData | null }) {
+  if (!data) return null
+
+  const isReceipt = data.mode === 'receipt'
+  const dt = data.printedAt
+
+  return (
+    <div className="kot-print" style={{ fontFamily: 'monospace', color: '#000', padding: '8px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{RESTAURANT_NAME}</div>
+        {isReceipt && (
+          <>
+            <div style={{ fontSize: '10px' }}>{RESTAURANT_ADDRESS}</div>
+            <div style={{ fontSize: '10px' }}>{RESTAURANT_PHONE}</div>
+            <div style={{ fontSize: '10px' }}>GSTIN: {RESTAURANT_GSTIN}</div>
+          </>
+        )}
+        <div style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '4px', borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '2px 0' }}>
+          {isReceipt ? 'TAX INVOICE' : '*** KOT ***'}
+        </div>
+      </div>
+
+      <div style={{ fontSize: '11px', marginBottom: '6px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Order: {data.orderNumber}</span>
+          <span style={{ textTransform: 'capitalize' }}>{data.orderType.replace('-', ' ')}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>{dt.toLocaleDateString('en-IN')}</span>
+          <span>{dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+        {data.tableNumber && <div>Table: {data.tableNumber}</div>}
+        {data.customerName && <div>Customer: {data.customerName}</div>}
+      </div>
+
+      <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0', marginBottom: '6px' }}>
+        {data.items.map((item, idx) => (
+          <div key={idx} style={{ fontSize: '11px', marginBottom: '2px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: 'bold' }}>
+                {item.quantity} x {item.item_name}
+                {item.variation === 'Half' ? ' (H)' : ''}
+              </span>
+              {isReceipt && <span>{formatCurrency(item.line_total)}</span>}
+            </div>
+            {isReceipt && (
+              <div style={{ fontSize: '9px', paddingLeft: '8px', color: '#666' }}>
+                @ {formatCurrency(item.unit_price)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {isReceipt && (
+        <div style={{ fontSize: '11px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Subtotal</span>
+            <span>{formatCurrency(data.totals.subtotal)}</span>
+          </div>
+          {data.totals.discountAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Discount{data.discount?.label ? ` (${data.discount.label})` : ''}</span>
+              <span>-{formatCurrency(data.totals.discountAmount)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Taxable</span>
+            <span>{formatCurrency(data.totals.taxableAmount)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>CGST @ {(CGST_RATE * 100).toFixed(1)}%</span>
+            <span>{formatCurrency(data.totals.cgstAmount)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>SGST @ {(SGST_RATE * 100).toFixed(1)}%</span>
+            <span>{formatCurrency(data.totals.sgstAmount)}</span>
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontWeight: 'bold',
+            fontSize: '13px',
+            borderTop: '1px dashed #000',
+            marginTop: '4px',
+            paddingTop: '4px',
+          }}>
+            <span>TOTAL</span>
+            <span>{formatCurrency(data.totals.total)}</span>
+          </div>
+          {data.paymentMethod && (
+            <div style={{ marginTop: '4px', textAlign: 'center', textTransform: 'uppercase' }}>
+              Paid by {data.paymentMethod}
+            </div>
+          )}
+          <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '10px' }}>
+            Thank you, visit again!
+          </div>
+        </div>
+      )}
+
+      {!isReceipt && (
+        <div style={{ fontSize: '11px', textAlign: 'center', marginTop: '4px' }}>
+          Total items: {data.totals.itemCount}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Build a PrintTicketData from current order + chosen mode
+function buildTicket(
+  mode: 'kot' | 'receipt',
+  order: ReturnType<typeof useCurrentOrder>['order'],
+  paymentMethod?: PaymentMethod,
+): PrintTicketData {
+  // Short tag: K-HHMMSS for KOT, R-HHMMSS for receipt
+  const now = new Date()
+  const stamp = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`
+  const prefix = mode === 'kot' ? 'K' : 'R'
+  return {
+    mode,
+    orderNumber: `${prefix}-${stamp}`,
+    orderType: order.order_type,
+    tableNumber: order.table_number || undefined,
+    customerName: order.customer_name || undefined,
+    items: order.items,
+    totals: order.totals,
+    discount: order.discount,
+    paymentMethod,
+    printedAt: now,
+  }
 }
 
 // ──────────────────────────────────────
@@ -403,7 +755,24 @@ function MobilePOSFlow() {
   const [step, setStep] = useState<'menu' | 'cart' | 'payment'>('menu')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [variationItem, setVariationItem] = useState<MenuItem | null>(null)
+  const [showDiscount, setShowDiscount] = useState(false)
+  const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { order, addItem, clearOrder } = useCurrentOrder()
+
+  const triggerPrint = (data: PrintTicketData) => {
+    setPrintData(data)
+    // Wait one tick for React to render the print div, then fire the print dialog
+    setTimeout(() => {
+      window.print()
+      // Clear after print dialog closes
+      setTimeout(() => setPrintData(null), 500)
+    }, 50)
+  }
+
+  const handlePrintKOT = () => {
+    if (order.items.length === 0) return
+    triggerPrint(buildTicket('kot', order))
+  }
 
   const filteredItems = useMemo(() =>
     selectedCategory === 'all'
@@ -421,9 +790,10 @@ function MobilePOSFlow() {
     }
   }
 
-  const handlePaymentComplete = (_method: 'cash' | 'card' | 'upi') => {
+  const handlePaymentComplete = (method: 'cash' | 'card' | 'upi') => {
     hapticMedium()
-    // TODO: save order to DB
+    // Print receipt with the captured order before clearing
+    triggerPrint(buildTicket('receipt', order, method))
     clearOrder()
     setStep('menu')
   }
@@ -435,7 +805,17 @@ function MobilePOSFlow() {
           <button onClick={() => setStep('menu')} className="text-sm text-brand-500 cursor-pointer">&larr; Menu</button>
           <h2 className="font-semibold">Your Order</h2>
         </div>
-        <OrderPanel onPayment={() => setStep('payment')} />
+        <OrderPanel
+          onPayment={() => setStep('payment')}
+          onOpenDiscount={() => setShowDiscount(true)}
+          onPrintKOT={handlePrintKOT}
+        />
+        <DiscountModal
+          open={showDiscount}
+          onClose={() => setShowDiscount(false)}
+          subtotal={order.totals.subtotal}
+        />
+        <PrintTicket data={printData} />
       </div>
     )
   }
@@ -469,6 +849,7 @@ function MobilePOSFlow() {
             </div>
           </div>
         </div>
+        <PrintTicket data={printData} />
       </div>
     )
   }
@@ -518,6 +899,9 @@ function MobilePOSFlow() {
           if (variationItem) addItem(variationItem, variation)
         }}
       />
+
+      {/* Print ticket (shown only on print) */}
+      <PrintTicket data={printData} />
     </div>
   )
 }
@@ -530,8 +914,23 @@ function DesktopPOSLayout() {
   const [variationItem, setVariationItem] = useState<MenuItem | null>(null)
   const [showPayment, setShowPayment] = useState(false)
   const [showOrderPanel, setShowOrderPanel] = useState(false)
+  const [showDiscount, setShowDiscount] = useState(false)
+  const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { addItem, order, clearOrder } = useCurrentOrder()
   const { isTablet } = useBreakpoint()
+
+  const triggerPrint = (data: PrintTicketData) => {
+    setPrintData(data)
+    setTimeout(() => {
+      window.print()
+      setTimeout(() => setPrintData(null), 500)
+    }, 50)
+  }
+
+  const handlePrintKOT = () => {
+    if (order.items.length === 0) return
+    triggerPrint(buildTicket('kot', order))
+  }
 
   const filteredItems = useMemo(() =>
     selectedCategory === 'all'
@@ -549,9 +948,9 @@ function DesktopPOSLayout() {
     }
   }
 
-  const handlePaymentComplete = (_method: 'cash' | 'card' | 'upi') => {
+  const handlePaymentComplete = (method: 'cash' | 'card' | 'upi') => {
     hapticMedium()
-    // TODO: save order to DB
+    triggerPrint(buildTicket('receipt', order, method))
     clearOrder()
     setShowPayment(false)
     setShowOrderPanel(false)
@@ -609,14 +1008,22 @@ function DesktopPOSLayout() {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <OrderPanel onPayment={() => setShowPayment(true)} />
+                  <OrderPanel
+                    onPayment={() => setShowPayment(true)}
+                    onOpenDiscount={() => setShowDiscount(true)}
+                    onPrintKOT={handlePrintKOT}
+                  />
                 </div>
               </div>
             </>
           )}
         </>
       ) : (
-        <OrderPanel onPayment={() => setShowPayment(true)} />
+        <OrderPanel
+          onPayment={() => setShowPayment(true)}
+          onOpenDiscount={() => setShowDiscount(true)}
+          onPrintKOT={handlePrintKOT}
+        />
       )}
 
       {/* Modals */}
@@ -634,6 +1041,14 @@ function DesktopPOSLayout() {
         onClose={() => setShowPayment(false)}
         onComplete={handlePaymentComplete}
       />
+
+      <DiscountModal
+        open={showDiscount}
+        onClose={() => setShowDiscount(false)}
+        subtotal={order.totals.subtotal}
+      />
+
+      <PrintTicket data={printData} />
     </div>
   )
 }

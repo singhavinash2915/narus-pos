@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useReducer, useCallback } from 'react'
 import type { CartItem, CartDiscount, CurrentOrder, OrderType, Variation, ItemType, MenuItem } from '@/types'
-import { TAX_RATE } from '@/lib/constants'
+import { CGST_RATE, SGST_RATE } from '@/lib/constants'
 
-interface OrderTotals {
+export interface OrderTotals {
   subtotal: number
   discountAmount: number
-  taxAmount: number
+  taxableAmount: number
+  cgstAmount: number
+  sgstAmount: number
+  taxAmount: number // = cgstAmount + sgstAmount, kept for DB compatibility
   total: number
   itemCount: number
 }
@@ -40,10 +43,13 @@ function calculateTotals(items: CartItem[], discount: CartDiscount | null): Orde
   discountAmount = Math.min(discountAmount, subtotal) // Can't exceed subtotal
 
   const taxableAmount = subtotal - discountAmount
-  const taxAmount = Math.round(taxableAmount * TAX_RATE)
-  const total = taxableAmount + taxAmount
+  // Round each GST half independently so the receipt math always reconciles
+  const cgstAmount = Math.round(taxableAmount * CGST_RATE * 100) / 100
+  const sgstAmount = Math.round(taxableAmount * SGST_RATE * 100) / 100
+  const taxAmount = cgstAmount + sgstAmount
+  const total = Math.round((taxableAmount + taxAmount) * 100) / 100
 
-  return { subtotal, discountAmount, taxAmount, total, itemCount }
+  return { subtotal, discountAmount, taxableAmount, cgstAmount, sgstAmount, taxAmount, total, itemCount }
 }
 
 const initialState: CurrentOrderState = {
@@ -53,7 +59,7 @@ const initialState: CurrentOrderState = {
   table_number: '',
   items: [],
   discount: null,
-  totals: { subtotal: 0, discountAmount: 0, taxAmount: 0, total: 0, itemCount: 0 },
+  totals: { subtotal: 0, discountAmount: 0, taxableAmount: 0, cgstAmount: 0, sgstAmount: 0, taxAmount: 0, total: 0, itemCount: 0 },
 }
 
 function orderReducer(state: CurrentOrderState, action: OrderAction): CurrentOrderState {

@@ -49,19 +49,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Invalid PIN' }
     }
 
-    // Supabase mode
+    // Supabase mode — use SECURITY DEFINER RPC so the staff table itself is locked down
     try {
-      const { data, error } = await supabase
-        .from('staff')
-        .select('*')
-        .eq('pin', pin)
-        .eq('is_active', true)
-        .single()
+      // Cast to any: the generated Database type doesn't yet know about this function.
+      // The RPC is defined in supabase/migrations/003_tighten_rls.sql.
+      const { data, error } = await (supabase as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>
+      }).rpc('verify_staff_pin', { p_pin: pin })
 
       if (error || !data) {
         return { success: false, error: 'Invalid PIN' }
       }
-      setStaff(data)
+      const rows = data as Array<Omit<Staff, 'pin'>>
+      if (rows.length === 0) {
+        return { success: false, error: 'Invalid PIN' }
+      }
+      // The RPC does not return the pin column on purpose
+      setStaff({ ...rows[0], pin: '' } as Staff)
       return { success: true }
     } catch {
       return { success: false, error: 'Connection error' }
