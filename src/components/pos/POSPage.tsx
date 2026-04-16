@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useCurrentOrder } from '@/contexts/CurrentOrderContext'
 import type { OrderTotals } from '@/contexts/CurrentOrderContext'
-import { demoCategories, demoMenuItems, demoCoupons } from '@/lib/demo-data'
+import { useMenuData } from '@/contexts/MenuDataContext'
 import { cn, formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,7 +17,7 @@ import {
   RESTAURANT_NAME, RESTAURANT_GSTIN, RESTAURANT_ADDRESS, RESTAURANT_PHONE,
   CGST_RATE, SGST_RATE,
 } from '@/lib/constants'
-import type { MenuItem, Variation, CartItem, CartDiscount, OrderType, PaymentMethod } from '@/types'
+import type { MenuItem, Variation, CartItem, CartDiscount, OrderType, PaymentMethod, Category } from '@/types'
 
 // ──────────────────────────────────────
 // Live clock — updates each minute
@@ -100,7 +100,7 @@ function CategorySelector({
   onSelect,
   layout,
 }: {
-  categories: typeof demoCategories
+  categories: Category[]
   selectedId: string
   onSelect: (id: string) => void
   layout: 'sidebar' | 'chips'
@@ -466,6 +466,7 @@ function DiscountModal({
   subtotal: number
 }) {
   const { setDiscount } = useCurrentOrder()
+  const { coupons } = useMenuData()
   const [mode, setMode] = useState<'percentage' | 'fixed' | 'coupon'>('percentage')
   const [value, setValue] = useState('')
   const [couponCode, setCouponCode] = useState('')
@@ -486,7 +487,7 @@ function DiscountModal({
     if (mode === 'coupon') {
       const code = couponCode.trim().toUpperCase()
       if (!code) { setError('Enter a coupon code'); return }
-      const coupon = demoCoupons.find(c => c.code === code && c.is_active)
+      const coupon = coupons.find(c => c.code === code && c.is_active)
       if (!coupon) { setError('Invalid or inactive coupon'); return }
       if (subtotal < coupon.min_order_value) {
         setError(`Minimum order ${formatCurrency(coupon.min_order_value)} required`); return
@@ -943,6 +944,7 @@ function MobilePOSFlow() {
   const [showDiscount, setShowDiscount] = useState(false)
   const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { order, orderNumber, addItem, clearOrder, bumpOrderNumber } = useCurrentOrder()
+  const { menuItems, categories } = useMenuData()
 
   const triggerPrint = (data: PrintTicketData) => {
     setPrintData(data)
@@ -959,9 +961,9 @@ function MobilePOSFlow() {
 
   const filteredItems = useMemo(() =>
     selectedCategory === 'all'
-      ? demoMenuItems.filter(i => i.is_available)
-      : demoMenuItems.filter(i => i.category_id === selectedCategory && i.is_available),
-    [selectedCategory]
+      ? menuItems.filter(i => i.is_available)
+      : menuItems.filter(i => i.category_id === selectedCategory && i.is_available),
+    [selectedCategory, menuItems]
   )
 
   const handleAddItem = (item: MenuItem) => {
@@ -1030,7 +1032,7 @@ function MobilePOSFlow() {
     <div className="h-full flex flex-col">
       <div className="pt-3 border-b">
         <CategorySelector
-          categories={demoCategories}
+          categories={categories}
           selectedId={selectedCategory}
           onSelect={setSelectedCategory}
           layout="chips"
@@ -1074,6 +1076,7 @@ function DesktopPOSLayout() {
   const [showDiscount, setShowDiscount] = useState(false)
   const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { addItem, order, orderNumber, clearOrder, bumpOrderNumber } = useCurrentOrder()
+  const { menuItems, categories } = useMenuData()
   const { isTablet } = useBreakpoint()
 
   const triggerPrint = (data: PrintTicketData) => {
@@ -1090,7 +1093,7 @@ function DesktopPOSLayout() {
   }
 
   const filteredItems = useMemo(() => {
-    let list = demoMenuItems.filter(i => i.is_available)
+    let list = menuItems.filter(i => i.is_available)
     if (selectedCategory !== 'all') {
       list = list.filter(i => i.category_id === selectedCategory)
     }
@@ -1099,7 +1102,7 @@ function DesktopPOSLayout() {
       list = list.filter(i => i.name.toLowerCase().includes(q))
     }
     return list
-  }, [selectedCategory, searchQuery])
+  }, [selectedCategory, searchQuery, menuItems])
 
   const handleAddItem = (item: MenuItem) => {
     hapticLight()
@@ -1132,7 +1135,7 @@ function DesktopPOSLayout() {
       <div className="flex-1 flex relative overflow-hidden">
         {/* Category Sidebar */}
         <CategorySelector
-          categories={demoCategories}
+          categories={categories}
           selectedId={selectedCategory}
           onSelect={setSelectedCategory}
           layout="sidebar"

@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CurrentOrderProvider } from '@/contexts/CurrentOrderContext'
+import { MenuDataProvider } from '@/contexts/MenuDataContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { LoginPage } from '@/components/auth/LoginPage'
@@ -23,6 +24,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <MenuDataProvider>
         <CurrentOrderProvider>
           <HashRouter>
             <Routes>
@@ -49,6 +51,7 @@ function App() {
             </Routes>
           </HashRouter>
         </CurrentOrderProvider>
+        </MenuDataProvider>
       </AuthProvider>
     </QueryClientProvider>
   )
