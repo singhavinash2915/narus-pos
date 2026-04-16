@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { generateDemoOrders } from '@/lib/demo-data'
+import { useOrders, useDeleteOrder } from '@/hooks/useOrders'
+import { useCurrentOrder } from '@/contexts/CurrentOrderContext'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from '@/components/ui/responsive-dialog'
-import { Eye, Play, Search } from 'lucide-react'
+import { Play, Search, Loader2, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { CGST_RATE, SGST_RATE } from '@/lib/constants'
 import type { Order, OrderStatus } from '@/types'
-
-const { orders: demoOrders } = generateDemoOrders(85)
 
 const statusColors: Record<OrderStatus, string> = {
   completed: 'bg-green-100 text-green-800',
@@ -53,7 +53,17 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
   )
 }
 
-function OrderDetailModal({ order, open, onClose }: { order: Order | null; open: boolean; onClose: () => void }) {
+function OrderDetailModal({
+  order,
+  open,
+  onClose,
+  onResume,
+}: {
+  order: Order | null
+  open: boolean
+  onClose: () => void
+  onResume: (order: Order) => void
+}) {
   if (!order) return null
 
   return (
@@ -116,8 +126,8 @@ function OrderDetailModal({ order, open, onClose }: { order: Order | null; open:
           </div>
         </div>
 
-        {order.status === 'held' && (
-          <Button className="w-full" size="touch">
+        {(order.status === 'held' || order.status === 'saved') && (
+          <Button className="w-full" size="touch" onClick={() => onResume(order)}>
             <Play className="w-4 h-4" />
             Resume Order
           </Button>
@@ -129,12 +139,17 @@ function OrderDetailModal({ order, open, onClose }: { order: Order | null; open:
 
 export function OrdersPage() {
   const { isMobile, isTablet } = useBreakpoint()
+  const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
+  const { data: orders = [], isLoading, error, refetch } = useOrders()
+  const deleteOrderMut = useDeleteOrder()
+  const { loadOrder, bumpOrderNumber } = useCurrentOrder()
+
   const filteredOrders = useMemo(() => {
-    let filtered = demoOrders
+    let filtered = orders
     if (statusFilter !== 'all') {
       filtered = filtered.filter(o => o.status === statusFilter)
     }
@@ -147,7 +162,41 @@ export function OrdersPage() {
       )
     }
     return filtered
-  }, [statusFilter, searchQuery])
+  }, [orders, statusFilter, searchQuery])
+
+  const handleResume = async (order: Order) => {
+    // Load order data into CurrentOrderContext
+    loadOrder({
+      order_type: order.order_type,
+      customer_name: order.customer_name || '',
+      customer_phone: order.customer_phone || '',
+      table_number: order.table_number || '',
+      items: (order.items || []).map(item => ({
+        id: `cart-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        menu_item_id: item.menu_item_id,
+        item_name: item.item_name,
+        variation: item.variation,
+        unit_price: item.unit_price,
+        quantity: item.quantity,
+        line_total: item.line_total,
+        type: 'non-veg' as const, // Type not stored in order_items — default
+      })),
+      discount: order.discount_amount > 0
+        ? { type: 'fixed', value: order.discount_amount, label: order.discount_label || 'Discount' }
+        : null,
+    })
+    bumpOrderNumber()
+
+    // Delete the old order from DB
+    try {
+      await deleteOrderMut.mutateAsync(order.id)
+    } catch {
+      // If delete fails (e.g. RLS), still navigate — the user can complete again
+    }
+
+    setSelectedOrder(null)
+    navigate('/pos')
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -155,7 +204,16 @@ export function OrdersPage() {
       <div className="px-4 py-3 border-b bg-white space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">Orders</h1>
-          <Badge variant="secondary">{filteredOrders.length} orders</Badge>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => refetch()}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-brand-500 hover:bg-brand-50 cursor-pointer"
+              title="Refresh"
+            >
+              <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+            </button>
+            <Badge variant="secondary">{filteredOrders.length} orders</Badge>
+          </div>
         </div>
 
         {/* Search */}
@@ -180,26 +238,48 @@ export function OrdersPage() {
         </Tabs>
       </div>
 
-      {/* Orders Grid */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className={cn(
-          "grid gap-3",
-          isMobile ? "grid-cols-1" : isTablet ? "grid-cols-2" : "grid-cols-3"
-        )}>
-          {filteredOrders.map(order => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onClick={() => setSelectedOrder(order)}
-            />
-          ))}
-        </div>
-
-        {filteredOrders.length === 0 && (
-          <div className="text-center text-neutral-400 py-12">
-            <p className="text-lg font-medium">No orders found</p>
-            <p className="text-sm mt-1">Try adjusting your search or filter</p>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-neutral-400">
+            <Loader2 className="w-8 h-8 animate-spin mb-3" />
+            <p className="text-sm">Loading orders...</p>
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 text-red-500">
+            <AlertTriangle className="w-8 h-8 mb-3" />
+            <p className="text-sm font-medium">Failed to load orders</p>
+            <p className="text-xs text-neutral-500 mt-1">{(error as Error).message}</p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
+              <RefreshCw className="w-4 h-4" /> Retry
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className={cn(
+              "grid gap-3",
+              isMobile ? "grid-cols-1" : isTablet ? "grid-cols-2" : "grid-cols-3"
+            )}>
+              {filteredOrders.map(order => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onClick={() => setSelectedOrder(order)}
+                />
+              ))}
+            </div>
+
+            {filteredOrders.length === 0 && (
+              <div className="text-center text-neutral-400 py-12">
+                <p className="text-lg font-medium">No orders found</p>
+                <p className="text-sm mt-1">
+                  {orders.length === 0
+                    ? 'Complete your first order from the POS page'
+                    : 'Try adjusting your search or filter'}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -208,6 +288,7 @@ export function OrdersPage() {
         order={selectedOrder}
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
+        onResume={handleResume}
       />
     </div>
   )

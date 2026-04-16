@@ -1,29 +1,29 @@
 import { useState, useMemo } from 'react'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { generateDemoOrders, demoMenuItems } from '@/lib/demo-data'
+import { useOrders } from '@/hooks/useOrders'
 import { cn, formatCurrency, formatDate, formatShortDate } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DollarSign, ShoppingBag, TrendingUp, Star } from 'lucide-react'
+import { DollarSign, ShoppingBag, TrendingUp, Star, Loader2, AlertTriangle, RefreshCw } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import type { DashboardPeriod, Order } from '@/types'
-
-const { orders: allOrders } = generateDemoOrders(85)
+import type { DashboardPeriod } from '@/types'
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4', '#ec4899']
 
-function getDateRange(period: DashboardPeriod): Date {
+function getDateRange(period: DashboardPeriod): string {
   const now = new Date()
+  let d: Date
   switch (period) {
-    case 'today': return new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    case 'week': { const d = new Date(now); d.setDate(d.getDate() - 7); return d }
-    case 'month': { const d = new Date(now); d.setMonth(d.getMonth() - 1); return d }
-    case 'quarter': { const d = new Date(now); d.setMonth(d.getMonth() - 3); return d }
+    case 'today': d = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break
+    case 'week': d = new Date(now); d.setDate(d.getDate() - 7); break
+    case 'month': d = new Date(now); d.setMonth(d.getMonth() - 1); break
+    case 'quarter': d = new Date(now); d.setMonth(d.getMonth() - 3); break
   }
+  return d.toISOString()
 }
 
 function KPICard({ title, value, icon: Icon, color }: { title: string; value: string; icon: typeof DollarSign; color: string }) {
@@ -48,12 +48,13 @@ export function DashboardPage() {
   const { isMobile, isTablet } = useBreakpoint()
   const [period, setPeriod] = useState<DashboardPeriod>('month')
 
-  const filteredOrders = useMemo(() => {
-    const startDate = getDateRange(period)
-    return allOrders.filter(o =>
-      o.status === 'completed' && new Date(o.created_at) >= startDate
-    )
-  }, [period])
+  const since = useMemo(() => getDateRange(period), [period])
+  const { data: allOrders = [], isLoading, error, refetch } = useOrders({ since })
+
+  const filteredOrders = useMemo(() =>
+    allOrders.filter(o => o.status === 'completed'),
+    [allOrders]
+  )
 
   // KPI calculations
   const kpis = useMemo(() => {
@@ -61,7 +62,6 @@ export function DashboardPage() {
     const orderCount = filteredOrders.length
     const avgValue = orderCount > 0 ? revenue / orderCount : 0
 
-    // Top item
     const itemCounts: Record<string, number> = {}
     filteredOrders.forEach(o => o.items?.forEach(i => {
       itemCounts[i.item_name] = (itemCounts[i.item_name] || 0) + i.quantity
@@ -71,7 +71,7 @@ export function DashboardPage() {
     return { revenue, orderCount, avgValue, topItem }
   }, [filteredOrders])
 
-  // Revenue trend data
+  // Revenue trend
   const revenueTrend = useMemo(() => {
     const dailyMap: Record<string, number> = {}
     filteredOrders.forEach(o => {
@@ -81,7 +81,7 @@ export function DashboardPage() {
     return Object.entries(dailyMap)
       .map(([date, revenue]) => ({ date, revenue: Math.round(revenue) }))
       .reverse()
-      .slice(-14) // Last 14 data points
+      .slice(-14)
   }, [filteredOrders])
 
   // Order type distribution
@@ -124,8 +124,33 @@ export function DashboardPage() {
     }))
   }, [filteredOrders])
 
-  // Recent orders
   const recentOrders = filteredOrders.slice(0, 10)
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-neutral-400">
+          <Loader2 className="w-8 h-8 animate-spin mb-3" />
+          <p className="text-sm">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-red-500">
+          <AlertTriangle className="w-8 h-8 mb-3" />
+          <p className="text-sm font-medium">Failed to load dashboard</p>
+          <p className="text-xs text-neutral-500 mt-1">{(error as Error).message}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4" /> Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -142,7 +167,6 @@ export function DashboardPage() {
         </Tabs>
       </div>
 
-      {/* Dashboard Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* KPI Cards */}
         <div className={cn(
@@ -155,153 +179,135 @@ export function DashboardPage() {
           <KPICard title="Top Item" value={kpis.topItem} icon={Star} color="bg-amber-500" />
         </div>
 
-        {/* Charts */}
-        <div className={cn(
-          "grid gap-4",
-          isMobile ? "grid-cols-1" : "grid-cols-2"
-        )}>
-          {/* Revenue Trend */}
-          <Card className={cn(!isMobile && "col-span-2")}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Revenue Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={revenueTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(val) => formatCurrency(Number(val))} />
-                  <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {filteredOrders.length === 0 ? (
+          <div className="text-center text-neutral-400 py-12">
+            <p className="text-lg font-medium">No completed orders yet</p>
+            <p className="text-sm mt-1">Complete orders from the POS page to see analytics</p>
+          </div>
+        ) : (
+          <>
+            {/* Charts */}
+            <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+              <Card className={cn(!isMobile && "col-span-2")}>
+                <CardHeader className="pb-2"><CardTitle className="text-base">Revenue Trend</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={revenueTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(val) => formatCurrency(Number(val))} />
+                      <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Top Items */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Top Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={topItems} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="quantity" fill="#f97316" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              {topItems.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-base">Top Items</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={topItems} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis type="number" tick={{ fontSize: 11 }} />
+                        <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Bar dataKey="quantity" fill="#f97316" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Order Types Pie */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Order Types</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={orderTypeData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {orderTypeData.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              {orderTypeData.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-base">Order Types</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie data={orderTypeData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
+                          {orderTypeData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Payment Methods Pie */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Payment Methods</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={paymentData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {paymentData.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+              {paymentData.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-base">Payment Methods</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie data={paymentData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
+                          {paymentData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-        {/* Recent Orders Table */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isMobile ? (
-              <div className="space-y-2">
-                {recentOrders.map(order => (
-                  <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <span className="text-sm font-medium">#{order.order_number}</span>
-                      <p className="text-xs text-neutral-500">{formatDate(order.created_at)}</p>
+            {/* Recent Orders */}
+            {recentOrders.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-base">Recent Orders</CardTitle></CardHeader>
+                <CardContent>
+                  {isMobile ? (
+                    <div className="space-y-2">
+                      {recentOrders.map(order => (
+                        <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <div>
+                            <span className="text-sm font-medium">#{order.order_number}</span>
+                            <p className="text-xs text-neutral-500">{formatDate(order.created_at)}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold">{formatCurrency(order.total)}</span>
+                            <p className="text-xs text-neutral-500 capitalize">{order.payment_method}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-bold">{formatCurrency(order.total)}</span>
-                      <p className="text-xs text-neutral-500 capitalize">{order.payment_method}</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-neutral-50">
+                          <tr>
+                            <th className="text-left px-3 py-2 font-medium text-neutral-500">#</th>
+                            <th className="text-left px-3 py-2 font-medium text-neutral-500">Date</th>
+                            <th className="text-left px-3 py-2 font-medium text-neutral-500">Type</th>
+                            <th className="text-left px-3 py-2 font-medium text-neutral-500">Items</th>
+                            <th className="text-left px-3 py-2 font-medium text-neutral-500">Payment</th>
+                            <th className="text-right px-3 py-2 font-medium text-neutral-500">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {recentOrders.map(order => (
+                            <tr key={order.id} className="hover:bg-neutral-50">
+                              <td className="px-3 py-2 font-medium">{order.order_number}</td>
+                              <td className="px-3 py-2 text-neutral-500">{formatDate(order.created_at)}</td>
+                              <td className="px-3 py-2 capitalize">{order.order_type.replace('-', ' ')}</td>
+                              <td className="px-3 py-2">{order.items?.length || 0}</td>
+                              <td className="px-3 py-2 capitalize">{order.payment_method}</td>
+                              <td className="px-3 py-2 text-right font-bold">{formatCurrency(order.total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-neutral-50">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-medium text-neutral-500">#</th>
-                      <th className="text-left px-3 py-2 font-medium text-neutral-500">Date</th>
-                      <th className="text-left px-3 py-2 font-medium text-neutral-500">Type</th>
-                      <th className="text-left px-3 py-2 font-medium text-neutral-500">Items</th>
-                      <th className="text-left px-3 py-2 font-medium text-neutral-500">Payment</th>
-                      <th className="text-right px-3 py-2 font-medium text-neutral-500">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {recentOrders.map(order => (
-                      <tr key={order.id} className="hover:bg-neutral-50">
-                        <td className="px-3 py-2 font-medium">{order.order_number}</td>
-                        <td className="px-3 py-2 text-neutral-500">{formatDate(order.created_at)}</td>
-                        <td className="px-3 py-2 capitalize">{order.order_type.replace('-', ' ')}</td>
-                        <td className="px-3 py-2">{order.items?.length || 0}</td>
-                        <td className="px-3 py-2 capitalize">{order.payment_method}</td>
-                        <td className="px-3 py-2 text-right font-bold">{formatCurrency(order.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+          </>
+        )}
       </div>
     </div>
   )

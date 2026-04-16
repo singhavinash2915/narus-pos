@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { Staff, StaffRole } from '@/types'
-import { demoStaff } from '@/lib/demo-data'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 interface AuthState {
@@ -39,23 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [staff])
 
   const login = useCallback(async (pin: string): Promise<{ success: boolean; error?: string }> => {
-    // Demo mode — match against demo staff
     if (!isSupabaseConfigured) {
-      const found = demoStaff.find(s => s.pin === pin && s.is_active)
-      if (found) {
-        setStaff(found)
-        return { success: true }
-      }
-      return { success: false, error: 'Invalid PIN' }
+      return { success: false, error: 'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' }
     }
 
-    // Supabase mode — use SECURITY DEFINER RPC so the staff table itself is locked down
     try {
-      // Cast to any: the generated Database type doesn't yet know about this function.
-      // The RPC is defined in supabase/migrations/003_tighten_rls.sql.
-      const { data, error } = await (supabase as unknown as {
-        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>
-      }).rpc('verify_staff_pin', { p_pin: pin })
+      const { data, error } = await supabase.rpc('verify_staff_pin', { p_pin: pin })
 
       if (error || !data) {
         return { success: false, error: 'Invalid PIN' }
@@ -64,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (rows.length === 0) {
         return { success: false, error: 'Invalid PIN' }
       }
-      // The RPC does not return the pin column on purpose
       setStaff({ ...rows[0], pin: '' } as Staff)
       return { success: true }
     } catch {
@@ -73,17 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const loginOwner = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Demo mode — owner login with any credentials
     if (!isSupabaseConfigured) {
-      const owner = demoStaff.find(s => s.role === 'owner')
-      if (owner) {
-        setStaff(owner)
-        return { success: true }
-      }
-      return { success: false, error: 'No owner account' }
+      return { success: false, error: 'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' }
     }
 
-    // Supabase Auth
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
@@ -130,5 +110,5 @@ export function useRequireRole(role: StaffRole): boolean {
   const { staff } = useAuth()
   if (!staff) return false
   if (role === 'owner') return staff.role === 'owner'
-  return true // 'staff' role means any authenticated user
+  return true
 }

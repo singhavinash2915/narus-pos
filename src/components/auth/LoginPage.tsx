@@ -66,7 +66,7 @@ export function LoginPage() {
               </div>
               <PinPad onSubmit={handlePinSubmit} isLoading={isLoading} error={pinError} />
               <div className="mt-4 text-center">
-                <p className="text-xs text-neutral-400">Demo PINs: 1234 (Staff), 0000 (Owner)</p>
+                <p className="text-xs text-neutral-400">Contact your manager for your PIN</p>
               </div>
             </TabsContent>
 
@@ -101,7 +101,7 @@ export function LoginPage() {
                   {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
                 <p className="text-xs text-neutral-400 text-center">
-                  Demo: any email/password works
+                  Use your Supabase Auth credentials
                 </p>
               </form>
             </TabsContent>

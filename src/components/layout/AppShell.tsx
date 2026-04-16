@@ -1,10 +1,12 @@
 import { Outlet } from 'react-router-dom'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
 import { Sidebar } from './Sidebar'
 import { BottomTabBar } from './BottomTabBar'
 
 export function AppShell() {
   const { isMobile } = useBreakpoint()
+  useRealtimeSync() // subscribe to Supabase Realtime for cross-device sync
 
   return (
     <div className="h-svh flex overflow-hidden" style={{ paddingTop: 'var(--sat)' }}>

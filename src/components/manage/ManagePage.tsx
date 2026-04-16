@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle, ResponsiveDialogFooter } from '@/components/ui/responsive-dialog'
-import { Plus, Edit2, Trash2, Search, X, AlertTriangle } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, X, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import type { MenuItem, Category, Coupon, ItemType, DiscountType } from '@/types'
 
 // ──────────────────────────────────────
@@ -495,33 +495,41 @@ function MenuItemsTab() {
   const getCategoryName = (catId: string) =>
     categories.find(c => c.id === catId)?.name || 'Unknown'
 
-  const handleSave = (data: MenuItemFormData) => {
-    if (editingItem) {
-      updateMenuItem(editingItem.id, {
-        name: data.name,
-        category_id: data.category_id,
-        type: data.type,
-        price_half: data.price_half ? Number(data.price_half) : null,
-        price_full: Number(data.price_full),
-        is_available: data.is_available,
-      })
-    } else {
-      addMenuItem({
-        name: data.name,
-        category_id: data.category_id,
-        type: data.type,
-        price_half: data.price_half ? Number(data.price_half) : null,
-        price_full: Number(data.price_full),
-        is_available: data.is_available,
-      })
+  const handleSave = async (data: MenuItemFormData) => {
+    try {
+      if (editingItem) {
+        await updateMenuItem(editingItem.id, {
+          name: data.name,
+          category_id: data.category_id,
+          type: data.type,
+          price_half: data.price_half ? Number(data.price_half) : null,
+          price_full: Number(data.price_full),
+          is_available: data.is_available,
+        })
+      } else {
+        await addMenuItem({
+          name: data.name,
+          category_id: data.category_id,
+          type: data.type,
+          price_half: data.price_half ? Number(data.price_half) : null,
+          price_full: Number(data.price_full),
+          is_available: data.is_available,
+        })
+      }
+      setShowForm(false)
+      setEditingItem(null)
+    } catch (e) {
+      console.error('Failed to save item:', e)
     }
-    setShowForm(false)
-    setEditingItem(null)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingItem) {
-      deleteMenuItem(deletingItem.id)
+      try {
+        await deleteMenuItem(deletingItem.id)
+      } catch (e) {
+        console.error('Failed to delete item:', e)
+      }
       setDeletingItem(null)
     }
   }
@@ -709,17 +717,21 @@ function CategoriesTab() {
   const sortedCategories = [...categories].sort((a, b) => a.sort_order - b.sort_order)
   const nextSortOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) + 1 : 1
 
-  const handleSave = (name: string, sortOrder: number) => {
-    if (editingCat) {
-      updateCategory(editingCat.id, { name, sort_order: sortOrder })
-    } else {
-      addCategory({ name, sort_order: sortOrder })
+  const handleSave = async (name: string, sortOrder: number) => {
+    try {
+      if (editingCat) {
+        await updateCategory(editingCat.id, { name, sort_order: sortOrder })
+      } else {
+        await addCategory({ name, sort_order: sortOrder })
+      }
+      setShowForm(false)
+      setEditingCat(null)
+    } catch (e) {
+      console.error('Failed to save category:', e)
     }
-    setShowForm(false)
-    setEditingCat(null)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingCat) {
       const itemCount = menuItems.filter(i => i.category_id === deletingCat.id).length
       if (itemCount > 0) {
@@ -727,7 +739,11 @@ function CategoriesTab() {
         setDeletingCat(null)
         return
       }
-      deleteCategory(deletingCat.id)
+      try {
+        await deleteCategory(deletingCat.id)
+      } catch (e) {
+        console.error('Failed to delete category:', e)
+      }
       setDeletingCat(null)
     }
   }
@@ -822,7 +838,7 @@ function CouponsTab() {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
   const [deletingCoupon, setDeletingCoupon] = useState<Coupon | null>(null)
 
-  const handleSave = (data: CouponFormData) => {
+  const handleSave = async (data: CouponFormData) => {
     const parsed = {
       code: data.code.trim().toUpperCase(),
       discount_type: data.discount_type,
@@ -834,18 +850,26 @@ function CouponsTab() {
       valid_until: null as string | null,
     }
 
-    if (editingCoupon) {
-      updateCoupon(editingCoupon.id, parsed)
-    } else {
-      addCoupon(parsed)
+    try {
+      if (editingCoupon) {
+        await updateCoupon(editingCoupon.id, parsed)
+      } else {
+        await addCoupon(parsed)
+      }
+      setShowForm(false)
+      setEditingCoupon(null)
+    } catch (e) {
+      console.error('Failed to save coupon:', e)
     }
-    setShowForm(false)
-    setEditingCoupon(null)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingCoupon) {
-      deleteCoupon(deletingCoupon.id)
+      try {
+        await deleteCoupon(deletingCoupon.id)
+      } catch (e) {
+        console.error('Failed to delete coupon:', e)
+      }
       setDeletingCoupon(null)
     }
   }
@@ -941,6 +965,31 @@ function CouponsTab() {
 // Main Manage Page
 // ──────────────────────────────────────
 export function ManagePage() {
+  const { isLoading, error } = useMenuData()
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-neutral-400">
+          <Loader2 className="w-8 h-8 animate-spin mb-3" />
+          <p className="text-sm">Loading menu data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-red-500">
+          <AlertTriangle className="w-8 h-8 mb-3" />
+          <p className="text-sm font-medium">Failed to load data</p>
+          <p className="text-xs text-neutral-500 mt-1">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b bg-white">

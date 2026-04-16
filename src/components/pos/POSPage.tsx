@@ -3,6 +3,8 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useCurrentOrder } from '@/contexts/CurrentOrderContext'
 import type { OrderTotals } from '@/contexts/CurrentOrderContext'
 import { useMenuData } from '@/contexts/MenuDataContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { useCreateOrder } from '@/hooks/useOrders'
 import { cn, formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -945,6 +947,8 @@ function MobilePOSFlow() {
   const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { order, orderNumber, addItem, clearOrder, bumpOrderNumber } = useCurrentOrder()
   const { menuItems, categories } = useMenuData()
+  const { staff } = useAuth()
+  const createOrder = useCreateOrder()
 
   const triggerPrint = (data: PrintTicketData) => {
     setPrintData(data)
@@ -972,23 +976,69 @@ function MobilePOSFlow() {
     else addItem(item, 'Full')
   }
 
-  const handlePaymentComplete = (method: PaymentMethod) => {
+  const handlePaymentComplete = async (method: PaymentMethod) => {
     hapticMedium()
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'completed',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        paymentMethod: method,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to save order:', e)
+    }
     triggerPrint(buildTicket('receipt', order, orderNumber, method))
     clearOrder()
     bumpOrderNumber()
     setStep('menu')
   }
 
-  const handleSave = () => {
-    // TODO: persist as 'saved' to Supabase
+  const handleSave = async () => {
+    if (order.items.length === 0) return
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'saved',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to save order:', e)
+    }
     clearOrder()
     bumpOrderNumber()
     setStep('menu')
   }
 
-  const handleHold = () => {
-    // TODO: persist as 'held' to Supabase
+  const handleHold = async () => {
+    if (order.items.length === 0) return
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'held',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to hold order:', e)
+    }
     clearOrder()
     bumpOrderNumber()
     setStep('menu')
@@ -1077,6 +1127,8 @@ function DesktopPOSLayout() {
   const [printData, setPrintData] = useState<PrintTicketData | null>(null)
   const { addItem, order, orderNumber, clearOrder, bumpOrderNumber } = useCurrentOrder()
   const { menuItems, categories } = useMenuData()
+  const { staff } = useAuth()
+  const createOrder = useCreateOrder()
   const { isTablet } = useBreakpoint()
 
   const triggerPrint = (data: PrintTicketData) => {
@@ -1110,8 +1162,24 @@ function DesktopPOSLayout() {
     else addItem(item, 'Full')
   }
 
-  const handlePaymentComplete = (method: PaymentMethod) => {
+  const handlePaymentComplete = async (method: PaymentMethod) => {
     hapticMedium()
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'completed',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        paymentMethod: method,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to save order:', e)
+    }
     triggerPrint(buildTicket('receipt', order, orderNumber, method))
     clearOrder()
     bumpOrderNumber()
@@ -1119,11 +1187,44 @@ function DesktopPOSLayout() {
     setShowOrderPanel(false)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (order.items.length === 0) return
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'saved',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to save order:', e)
+    }
     clearOrder()
     bumpOrderNumber()
   }
-  const handleHold = () => {
+
+  const handleHold = async () => {
+    if (order.items.length === 0) return
+    try {
+      await createOrder.mutateAsync({
+        orderType: order.order_type,
+        status: 'held',
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        tableNumber: order.table_number,
+        items: order.items,
+        totals: order.totals,
+        discount: order.discount,
+        staffId: staff?.id,
+      })
+    } catch (e) {
+      console.error('Failed to hold order:', e)
+    }
     clearOrder()
     bumpOrderNumber()
   }
@@ -1236,6 +1337,30 @@ function DesktopPOSLayout() {
 // ──────────────────────────────────────
 export function POSPage() {
   const { isMobile } = useBreakpoint()
+  const { isLoading, error } = useMenuData()
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-neutral-400">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm">Loading menu...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-red-500 text-center px-4">
+          <p className="text-sm font-medium">Failed to load menu</p>
+          <p className="text-xs text-neutral-500 mt-1">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isMobile) return <MobilePOSFlow />
   return <DesktopPOSLayout />
 }
